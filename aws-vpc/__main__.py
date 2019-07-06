@@ -40,7 +40,6 @@ def routeTablePub(vpc, gateway):
     )
     return resp
 def publicAcl(vpc):
-
     resp = ec2.NetworkAcl("Public ACL",
                           vpc_id=vpc    
     )
@@ -59,6 +58,7 @@ def publicAcl(vpc):
     https = ec2.NetworkAclRule("Port 443 Access",
                               cidr_block="0.0.0.0/0",
                               from_port="443",
+                              egress="False",
                               network_acl_id=resp,
                               protocol="6",
                               rule_action="Allow",
@@ -69,17 +69,47 @@ def publicAcl(vpc):
     ssh = ec2.NetworkAclRule("Port 22 Access",
                               cidr_block="0.0.0.0/0",
                               from_port="22",
+                              egress="False",
                               network_acl_id=resp,
                               protocol="6",
                               rule_action="Allow",
                               rule_number="120",
                               to_port="22"
     )
+    allout = ec2.NetworkAclRule("Allow /0 to outbounds rule",
+                                cidr_block="0.0.0.0/0",
+                                egress="True",
+                                network_acl_id=resp,
+                                protocol="-1",
+                                rule_action="Allow",
+                                rule_number="100",
+    )
     return resp
 def routeTablePriv():
-    nat = ec2.NatGateWay("",
-    )
     reps = ec2.RouteTable(""
+    )
+
+def privateAcl(vpc, cidr):
+    resp = ec2.NetworkAcl("Public ACL",
+        vpc_id=vpc    
+    )
+    ssh = ec2.NetworkAclRule("Port 22 Access",
+                              cidr_block=cidr,
+                              from_port="22",
+                              network_acl_id=resp,
+                              protocol="6",
+                              rule_action="Allow",
+                              rule_number="120",
+                              to_port="22"
+    )
+    http = ec2.NetworkAclRule("Port 80 Access",
+                              cidr_block=cidr,
+                              from_port="80",
+                              network_acl_id=resp,
+                              protocol="6",
+                              rule_action="Allow",
+                              rule_number="120",
+                              to_port="22"
     )
 
 def main():
@@ -109,7 +139,6 @@ def main():
      
     publicAcl(myvpc)
     rtpublic = routeTablePub(myvpc, igw)
-
 
 if __name__ == '__main__':
     main()
